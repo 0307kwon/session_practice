@@ -13,8 +13,8 @@ app.use(session({
 }));
 
 app.get("/auth/logout", (req,res)=>{
-    req.session.nickname = undefined;
-    res.redirect("/auth/login/page");
+    delete req.session.nickname;
+    res.redirect("/welcome");
 });
 
 app.get("/welcome",(req,res)=>{
