@@ -1,6 +1,8 @@
 const express = require("express");
 const session = require("express-session");
 const body_parser = require("body-parser");
+const FileStore = require("session-file-store")(session);
+const fileStoreOption = {}
 
 const app = express();
 
@@ -10,6 +12,7 @@ app.use(session({
     secret: "dskvnDT12#$#!@",
     resave: false,
     saveUninitialized: true,
+    store: new FileStore(fileStoreOption),
 }));
 
 app.get("/auth/logout", (req,res)=>{
@@ -47,7 +50,10 @@ app.post("/auth/login/process",(req,res)=>{
     const pwd = req.body.password;
     if(id === db.id && pwd === db.password){
         req.session.nickname = db.nickname;
-        res.redirect("/welcome");
+        req.session.save((err)=>{
+            if(err) throw err;
+            res.redirect("/welcome");
+        });
     }else{
         res.send("로그인 실패");
     }
