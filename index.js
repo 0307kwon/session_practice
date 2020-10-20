@@ -44,7 +44,7 @@ app.post("/auth/login/process",(req,res)=>{
     const db = {
         id:"0307kwon",
         password:"1234",
-        nickname:"감군",
+        nickname:"감군2",
     }
     const id = req.body.id;
     const pwd = req.body.password;
