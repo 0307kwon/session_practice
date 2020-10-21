@@ -1,31 +1,22 @@
 const express = require("express");
 const session = require("express-session");
 const body_parser = require("body-parser");
+const mongoose = require("mongoose");
 const app = express(); 
-const MongoDBStore = require("connect-mongodb-session")(session);
+const MongoStore = require("connect-mongoose-only")(session);
 
-const store = new MongoDBStore({
-    uri:"mongodb+srv://0307kwon:12345@cluster0.etajt.mongodb.net/test?retryWrites=true&w=majority",
-    collection:"session",
-    connectionOptions: {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-      },
-})
+mongoose.connect(`mongodb+srv://0307kwon:12345@cluster0.etajt.mongodb.net/test?retryWrites=true&w=majority`,
+{ useNewUrlParser: true,
+    useUnifiedTopology: true,
+});
 
-store.on("error",(err)=>{
-    console.log(err);
-})
-store.once("open",()=>{
-    console.log("연결");
-})
 app.use(body_parser.urlencoded({extended: false}))
 
 app.use(session({
     secret: "dskvnDT12#$#!@",
     resave: false,
     saveUninitialized: true,
-    store:store,
+    store:new MongoStore({mongooseConnection:mongoose.connection}),
 }));
 
 app.get("/",(req,res)=>{
