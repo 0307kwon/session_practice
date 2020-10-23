@@ -96,7 +96,7 @@ app.post("/auth/login/process",(req,res)=>{
     User.findOne({id:req.body.id},(err,user)=>{
         if(err) throw err;
         if(user === null){
-            res.send("없는 아이디 입니다.");
+            res.send("없는 아이디 입니다..");
         }else{
             if(user.pwd === req.body.pwd){
                 req.session.nickname = user.nickname;
