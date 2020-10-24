@@ -2,7 +2,9 @@ const express = require("express");
 const session = require("express-session");
 const body_parser = require("body-parser");
 const mongoose = require("mongoose");
-const app = express(); 
+const bkfd2Password  = require("pbkdf2-password");
+const hasher = bkfd2Password();
+const app = express();
 const MongoStore = require("connect-mongoose-only")(session);
 
 mongoose.connect(`mongodb+srv://0307kwon:12345@cluster0.etajt.mongodb.net/test?retryWrites=true&w=majority`,
@@ -13,6 +15,7 @@ mongoose.connect(`mongodb+srv://0307kwon:12345@cluster0.etajt.mongodb.net/test?r
 const userSchema = new mongoose.Schema({
     id:String,
     pwd:String,
+    salt:String,
     nickname:String,
 });
 
@@ -79,17 +82,23 @@ app.post("/auth/register/process",(req,res)=>{
     const id = req.body.id;
     const pwd = req.body.pwd;
     const nickname = req.body.nickname;
-    const user = new User({
-        id:id,
-        pwd:pwd,
-        nickname:nickname,
-    });
-    user.save((err)=>{
+
+    const opts ={
+        password: pwd,
+    }
+    hasher(opts,(err,pass,salt,hash)=>{
         if(err) throw err;
-        res.redirect("/welcome");
+        const user = new User({
+            id:id,
+            pwd:hash,
+            salt:salt,
+            nickname:nickname,
+        });
+        user.save((err)=>{
+            if(err) throw err;
+            res.redirect("/welcome");
+        })
     })
-
-
 });
 
 app.post("/auth/login/process",(req,res)=>{
@@ -98,15 +107,22 @@ app.post("/auth/login/process",(req,res)=>{
         if(user === null){
             res.send("없는 아이디 입니다..");
         }else{
-            if(user.pwd === req.body.pwd){
-                req.session.nickname = user.nickname;
-                req.session.save((err)=>{
-                    if(err) throw err;
-                    res.redirect("/welcome");
-                });
-            }else{
-                res.send("비밀번호 틀림");
-            }
+            const opts = {
+                password:req.body.pwd,
+                salt:user.salt,
+            };
+            hasher(opts,(err,pass,salt,hash)=>{
+                if(user.pwd === hash){
+                    req.session.nickname = user.nickname;
+                    req.session.save((err)=>{
+                        if(err) throw err;
+                        res.redirect("/welcome");
+                    });
+                }else{
+                    res.send("비밀번호 틀림");
+                }
+            });
+            
         }
     });
 });
